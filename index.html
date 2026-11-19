@@ -89,7 +89,14 @@ label{font-size:13px;color:var(--dim);letter-spacing:.08em}
 input,select{font-family:inherit;font-size:16px;color:var(--text);background:rgba(5,6,15,.6);border:1px solid rgba(169,155,214,.3);border-radius:12px;padding:11px 12px;outline:none;color-scheme:dark}
 input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,197,107,.15)}
 .check{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:14px;color:var(--dim)}
-.check input{width:18px;height:18px;accent-color:var(--gold)}
+.check{cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.check input{-webkit-appearance:none;appearance:none;flex:none;width:20px;height:20px;padding:0;margin:0;border-radius:6px;
+  border:1px solid rgba(169,155,214,.45);background:rgba(5,6,15,.6);position:relative;cursor:pointer;transition:.2s;box-shadow:none}
+.check input:checked{background:linear-gradient(180deg,#3a2668,#1a1238);border-color:var(--gold);box-shadow:0 0 10px rgba(232,197,107,.25)}
+.check input:checked::after{content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;border:solid var(--gold2);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.check input:focus-visible{outline:2px solid rgba(232,197,107,.4);outline-offset:2px}
+.check input:checked + span{color:var(--lav)}
+input:disabled{opacity:.4}
 .btns{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
 button{font-family:inherit;cursor:pointer;border-radius:14px;font-size:16px;padding:13px 18px;border:1px solid rgba(232,197,107,.55);transition:.2s}
 .primary{flex:2 1 220px;background:linear-gradient(180deg,#3a2668,#1a1238);color:var(--gold2);font-weight:700;letter-spacing:.1em;box-shadow:0 0 24px rgba(232,197,107,.15)}
@@ -249,7 +256,7 @@ button{font-family:inherit;cursor:pointer;border-radius:14px;font-size:16px;padd
       <div class="field"><label for="date">생년월일 (양력)</label><input id="date" type="text" inputmode="numeric" autocomplete="bday" placeholder="예) 19950731" maxlength="14"></div>
       <div class="field"><label for="time">태어난 시간</label><input id="time" type="text" placeholder="예) 2230, 밤 10시 30분" maxlength="16"></div>
     </div>
-    <label class="check"><input type="checkbox" id="notime"> 시간 모름 (모르는 것도 팔자다)</label>
+    <label class="check"><input type="checkbox" id="notime"><span>시간 모름 (모르는 것도 팔자다)</span></label>
     <div class="btns">
       <button class="primary" id="go">🌙 사주 할퀴기</button>
     </div>

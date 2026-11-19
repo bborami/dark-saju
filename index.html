@@ -252,7 +252,6 @@ button{font-family:inherit;cursor:pointer;border-radius:14px;font-size:16px;padd
     <label class="check"><input type="checkbox" id="notime"> 시간 모름 (모르는 것도 팔자다)</label>
     <div class="btns">
       <button class="primary" id="go">🌙 사주 할퀴기</button>
-      <button class="ghost" id="sample">🐈‍⬛ 예시: 계해일주</button>
     </div>
     <p class="note">양력·한국시간 기준으로 대충 뽑음. 세세한 시간 보정 같은 건 냥선생이 귀찮아서 안 함.</p>
   </section>
@@ -845,7 +844,6 @@ function run(){
 }
 function bubble(h){$("bubble").innerHTML=h}
 $("go").onclick=run;
-$("sample").onclick=()=>{$("name").value="계해씨";$("date").value="1995-07-31";$("time").value="22:30";$("notime").checked=false;run()};
 $("notime").onchange=e=>{$("time").disabled=e.target.checked};
 $("again").onclick=()=>{$("result").style.display="none";window.scrollTo({top:0,behavior:"smooth"});bubble("또 누굴 털려고? 좋다, <b>내놔봐</b>.")};
 $("copy").onclick=()=>{navigator.clipboard?.writeText(lastText).then(()=>{$("toast").classList.add("on");clearTimeout(window._tt);window._tt=setTimeout(()=>$("toast").classList.remove("on"),4000)})};

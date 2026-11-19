@@ -45,15 +45,15 @@ body{
   .halo,.cat .smk,.cat .haze,.cat .tail,.cat .ember{animation:none!important}
   .cat .smk{display:none}
 }
-.smoke{will-change:transform;position:fixed;border-radius:50%;filter:blur(60px);opacity:.28;z-index:1;pointer-events:none;mix-blend-mode:screen}
-.smoke.s1{width:60vw;height:40vh;left:-15vw;top:20vh;background:#6c55b8;animation:drift1 28s ease-in-out infinite alternate}
-.smoke.s2{width:55vw;height:45vh;right:-20vw;top:45vh;background:#3d2f7d;animation:drift2 34s ease-in-out infinite alternate}
-.smoke.s3{width:40vw;height:30vh;left:30vw;top:-5vh;background:#8a76c9;opacity:.16;animation:drift1 40s ease-in-out infinite alternate-reverse}
+.smoke{will-change:transform;position:fixed;opacity:.34;z-index:1;pointer-events:none} /* 블러 대신 그라데이션(가벼움) */
+.smoke.s1{width:60vw;height:40vh;left:-15vw;top:20vh;background:radial-gradient(closest-side,rgba(108,85,184,.95),rgba(108,85,184,.4) 55%,transparent);animation:drift1 28s ease-in-out infinite alternate}
+.smoke.s2{width:55vw;height:45vh;right:-20vw;top:45vh;background:radial-gradient(closest-side,rgba(61,47,125,1),rgba(61,47,125,.4) 55%,transparent);animation:drift2 34s ease-in-out infinite alternate}
+.smoke.s3{width:40vw;height:30vh;left:30vw;top:-5vh;background:radial-gradient(closest-side,rgba(138,118,201,.95),rgba(138,118,201,.35) 55%,transparent);opacity:.2;animation:drift1 40s ease-in-out infinite alternate-reverse}
 @keyframes drift1{to{transform:translate(18vw,-6vh) scale(1.25)}}
 @keyframes drift2{to{transform:translate(-22vw,8vh) scale(1.15)}}
 body.typing *{animation-play-state:paused!important}
 body.typing .smoke,body.typing #fog{display:none}
-#fog{will-change:transform;position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;opacity:.35;mix-blend-mode:screen}
+#fog{will-change:transform;position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;opacity:.42}
 #water{position:fixed;left:0;right:0;bottom:0;height:34vh;z-index:1;pointer-events:none;
   -webkit-mask-image:linear-gradient(to top,#000 10%,transparent 100%);mask-image:linear-gradient(to top,#000 10%,transparent 100%);opacity:.55}
 #water svg{width:100%;height:100%}
@@ -1083,10 +1083,10 @@ $("copy").onclick=()=>{navigator.clipboard?.writeText(lastText).then(()=>{$("toa
   // 입력칸에 포커스가 있으면 배경 애니메이션 정지
   document.addEventListener("focusin",e=>{if(e.target.matches("input"))document.body.classList.add("typing")});
   document.addEventListener("focusout",e=>{if(e.target.matches("input"))setTimeout(()=>{if(!document.activeElement||!document.activeElement.matches("input"))document.body.classList.remove("typing")},50)});
-  for(let i=0;i<(MOB?0:18);i++){const m=document.createElement("div");m.className="mote";m.style.left=Math.random()*100+"vw";
+  for(let i=0;i<(MOB?0:12);i++){const m=document.createElement("div");m.className="mote";m.style.left=Math.random()*100+"vw";
     m.style.animationDuration=10+Math.random()*14+"s";m.style.animationDelay=-Math.random()*20+"s";const z=2+Math.random()*3;m.style.width=m.style.height=z+"px";document.body.appendChild(m)}
   const P=["✿","❀","✾","❁"];
-  for(let i=0;i<(MOB?0:10);i++){const p=document.createElement("div");p.className="petal";p.textContent=P[i%4];
+  for(let i=0;i<(MOB?0:8);i++){const p=document.createElement("div");p.className="petal";p.textContent=P[i%4];
     if(i%5===0){p.style.color="#c4303f";p.style.textShadow="0 0 6px rgba(196,48,63,.8)"}
     p.style.left=Math.random()*100+"vw";p.style.animationDuration=16+Math.random()*16+"s";p.style.animationDelay=-Math.random()*30+"s";p.style.fontSize=10+Math.random()*8+"px";document.body.appendChild(p)}
 })();

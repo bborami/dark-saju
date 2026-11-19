@@ -733,7 +733,7 @@ function reading(s,name){
   // 관계
   const relP=[YEARB[s.year[1]]];
   const lacks=cnt.map((c,i)=>c===0?i:-1).filter(i=>i>=0);
-  const muchI=cnt.indexOf(Math.max(...cnt));
+  const muchI=pick(r,cnt.map((c,i)=>c===Math.max(...cnt)?i:-1).filter(i=>i>=0));
   if(cnt[muchI]>=3) relP.push(MUCH[muchI]);
   else if(lacks.length) relP.push(LACK[pick(r,lacks)]);
   const noneG=tg.map((c,i)=>c===0&&i!==2?i:-1).filter(i=>i>=0); // 재성 없음은 돈 칸에서
@@ -792,9 +792,13 @@ function render(s,name){
   const max=Math.max(...R.cnt,1);
   $("elements").innerHTML=R.cnt.map((c,i)=>`<div class="el"><div class="bar"><div class="fill" style="height:0;background:linear-gradient(to top,${EL_COLOR[i]},${EL_COLOR[i]}55)" data-h="${c/max*100}"></div></div><b>${c}</b>${EL_EASY[i]} ${EL_H[i]}</div>`).join("");
   const z=R.cnt.map((c,i)=>c===0?i:-1).filter(i=>i>=0);
-  const top=R.cnt.indexOf(Math.max(...R.cnt));
-  $("elcap").textContent=z.length?`${z.map(i=>EL_EASY[i]).join("·")} 기운이 아예 없다. 빈칸 많은 인생인데 ${EL_EASY[top]} 기운만 ${R.cnt[top]}개나 쌓아놨네.`
-                                  :`${EL_EASY[top]} 기운이 ${R.cnt[top]}개로 제일 많다. 한쪽으로 쏠린 건 사주나 성격이나 똑같다.`;
+  const mxc=Math.max(...R.cnt), tops=R.cnt.map((c,i)=>c===mxc?i:-1).filter(i=>i>=0);
+  const topNames=tops.map(i=>EL_EASY[i]).join("·");
+  const zTxt=z.length?`${z.map(i=>EL_EASY[i]).join("·")} 기운이 아예 없다. `:"";
+  let rest;
+  if(tops.length===1) rest=z.length?`빈칸 많은 인생인데 ${topNames} 기운만 ${mxc}개나 쌓아놨네.`:`${topNames} 기운이 ${mxc}개로 제일 많다. 한쪽으로 쏠린 건 사주나 성격이나 똑같다.`;
+  else rest=`${z.length?"나머지 ":""}${topNames} 기운은 사이좋게 ${mxc}개씩. 뭐 하나 튀는 것도 없이 고만고만하다.`;
+  $("elcap").textContent=zTxt+rest;
   $("cards").innerHTML=R.out.map(c=>`<article class="card${c.cat?" catcard":""}${c.warn?" warn":""}"><h3><span class="ico">${c.ico}</span>${c.t}</h3>${c.p.map(x=>`<p>${x}</p>`).join("")}${c.good?`<p class="good">${c.good}</p>`:""}</article>`).join("");
   const pill=cols.slice().reverse().map(([l,p])=>`${l} ${p?STEM[p[0]]+BR[p[1]]:"??"}`).join(" / ");
   lastText=`🌙 어둠의 사주 — ${name?name+"의 ":""}${R.ilju}일주\n${pill}\n\n`+R.out.map(c=>`${c.ico} ${c.t}\n${c.p.join(" ")}${c.good?"\n"+c.good:""}`).join("\n\n")+"\n\n— 냥선생";

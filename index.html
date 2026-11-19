@@ -713,7 +713,7 @@ function reading(s,name){
   });
   ten.forEach((c,i)=>tg[i>>1]+=c);
   const key=all.map(p=>p.join(".")).join("|");
-  const r=rng(hash(key+"#"+(name||"")));
+  const r=rng(hash(key)); // 같은 생년월일시면 항상 같은 풀이 (이름은 영향 없음)
   const ilju=STEM[ds]+BR[s.day[1]];
   const out=[];
   // 가장 센 십성 (동점이면 시드로)

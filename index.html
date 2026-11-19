@@ -244,8 +244,8 @@ button{font-family:inherit;cursor:pointer;border-radius:14px;font-size:16px;padd
       <div class="field"><label for="name">이름 (안 써도 됨, 어차피 기억 안 함)</label><input id="name" placeholder="예) 김아무개" maxlength="12"></div>
     </div>
     <div class="row" style="margin-top:12px">
-      <div class="field"><label for="date">생년월일 (양력)</label><input id="date" type="date" min="1900-01-01" max="2099-12-31"></div>
-      <div class="field"><label for="time">태어난 시간</label><input id="time" type="time"></div>
+      <div class="field"><label for="date">생년월일 (양력)</label><input id="date" type="text" inputmode="numeric" autocomplete="bday" placeholder="예) 19950731" maxlength="14"></div>
+      <div class="field"><label for="time">태어난 시간</label><input id="time" type="text" placeholder="예) 2230, 밤 10시 30분" maxlength="16"></div>
     </div>
     <label class="check"><input type="checkbox" id="notime"> 시간 모름 (모르는 것도 팔자다)</label>
     <div class="btns">
@@ -712,12 +712,37 @@ function render(s,name){
 }
 const esc=s=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const LOADS=["냥선생이 꼬리로 점치는 중…","달빛에 네 팔자 비춰보는 중… 어둡다.","연기 속에서 단점 세는 중… 아직 세는 중."];
+function parseDate(v){
+  let y,m,d; const dg=v.replace(/\D/g,""); const parts=v.split(/\D+/).filter(Boolean);
+  if(parts.length>=3){[y,m,d]=parts.map(Number); if(y<100) y+= y>(new Date().getFullYear()%100)?1900:2000;}
+  else if(dg.length===8){y=+dg.slice(0,4);m=+dg.slice(4,6);d=+dg.slice(6,8);}
+  else if(dg.length===6){y=+dg.slice(0,2);m=+dg.slice(2,4);d=+dg.slice(4,6);y+= y>(new Date().getFullYear()%100)?1900:2000;}
+  else return null;
+  const t=new Date(y,m-1,d);
+  if(y<1900||y>2099||t.getFullYear()!==y||t.getMonth()!==m-1||t.getDate()!==d) return null;
+  return [y,m,d];
+}
+function parseTime(v){
+  const pm=/오후|밤|저녁|pm/i.test(v), am=/오전|새벽|아침|am/i.test(v);
+  const nums=v.match(/\d+/g); if(!nums) return null;
+  let h,mi=0;
+  if(nums.length===1&&nums[0].length>=3){const n=nums[0].padStart(4,"0");h=+n.slice(0,2);mi=+n.slice(2,4);}
+  else{h=+nums[0]; if(nums[1]) mi=+nums[1]; if(/반/.test(v)&&!nums[1]) mi=30;}
+  if(pm&&h<12) h+=12; if(am&&h===12) h=0;
+  if(h>23||mi>59) return null;
+  return [h,mi];
+}
 function run(){
-  const v=$("date").value;
+  const v=$("date").value.trim();
   if(!v){bubble("생년월일도 안 넣고 뭘 보겠다는 거냐. <b>기본부터</b> 해라.");return}
-  const [y,m,d]=v.split("-").map(Number);
-  const noT=$("notime").checked||!$("time").value;
-  const [hh,mm]=noT?[0,0]:$("time").value.split(":").map(Number);
+  const D=parseDate(v);
+  if(!D){bubble("날짜가 이상하다. <b>19950731</b>처럼 여덟 자리로 넣어라. 그것도 어렵냐.");return}
+  const [y,m,d]=D;
+  const tv=$("time").value.trim();
+  let T=null;
+  if(!$("notime").checked && tv){T=parseTime(tv); if(!T){bubble("시간을 못 알아먹겠다. <b>2230</b>이나 <b>밤 10시 30분</b>처럼 써라.");return}}
+  const noT=!T;
+  const [hh,mm]=noT?[0,0]:T;
   const s=calcSaju(y,m,d,hh,mm,!noT);
   const name=$("name").value.trim();
   $("result").style.display="none";$("loading").style.display="block";

@@ -35,7 +35,16 @@ body{
 }
 /* ---------- 배경 레이어 ---------- */
 #stars{position:fixed;inset:0;z-index:0;pointer-events:none}
-@media (max-width:600px){.smoke{filter:blur(40px)!important;opacity:.2!important}.smoke.s3{display:none}}
+@media (max-width:600px){ /* 폰: 무거운 효과는 끄고 가벼운 그라데이션으로 대체 */
+  #fog,.mote,.petal,.smoke.s3{display:none!important}
+  .smoke{filter:none!important;mix-blend-mode:normal!important;animation:none!important;opacity:.55!important}
+  .smoke.s1{background:radial-gradient(closest-side,rgba(108,85,184,.45),transparent)!important}
+  .smoke.s2{background:radial-gradient(closest-side,rgba(61,47,125,.5),transparent)!important}
+  #water svg{display:none}
+  #water{background:radial-gradient(120% 70% at 50% 100%,rgba(232,197,107,.22),rgba(20,16,50,.3) 55%,transparent 80%)}
+  .halo,.cat .smk,.cat .haze,.cat .tail,.cat .ember{animation:none!important}
+  .cat .smk{display:none}
+}
 .smoke{will-change:transform;position:fixed;border-radius:50%;filter:blur(60px);opacity:.28;z-index:1;pointer-events:none;mix-blend-mode:screen}
 .smoke.s1{width:60vw;height:40vh;left:-15vw;top:20vh;background:#6c55b8;animation:drift1 28s ease-in-out infinite alternate}
 .smoke.s2{width:55vw;height:45vh;right:-20vw;top:45vh;background:#3d2f7d;animation:drift2 34s ease-in-out infinite alternate}
@@ -1062,6 +1071,10 @@ $("copy").onclick=()=>{navigator.clipboard?.writeText(lastText).then(()=>{$("toa
     st=Array.from({length:Math.min(160,Math.floor(innerWidth*H/6000))},()=>({x:Math.random()*c.width,y:Math.random()*c.height*.8,r:Math.random()*1.3*DPR+.2,p:Math.random()*6.28,s:.5+Math.random()*1.5}))}
   size();addEventListener("resize",size);
   let prev=0;
+  const MOB=innerWidth<600;
+  function draw(t){x.clearRect(0,0,c.width,c.height);
+    for(const s of st){const a=.35+.65*Math.abs(Math.sin(s.p+t/1000*s.s*.6));x.globalAlpha=a;x.fillStyle=s.r>1.4?"#f6e2a3":"#cfc6f0";x.beginPath();x.arc(s.x,s.y,s.r,0,6.28);x.fill()}}
+  if(MOB){draw(0);addEventListener("resize",()=>draw(0));} else
   (function loop(t){requestAnimationFrame(loop);
     if(t-prev<50||document.body.classList.contains("typing")||document.hidden) return; prev=t; // 20fps, 입력 중엔 멈춤
     x.clearRect(0,0,c.width,c.height);
@@ -1070,11 +1083,10 @@ $("copy").onclick=()=>{navigator.clipboard?.writeText(lastText).then(()=>{$("toa
   // 입력칸에 포커스가 있으면 배경 애니메이션 정지
   document.addEventListener("focusin",e=>{if(e.target.matches("input"))document.body.classList.add("typing")});
   document.addEventListener("focusout",e=>{if(e.target.matches("input"))setTimeout(()=>{if(!document.activeElement||!document.activeElement.matches("input"))document.body.classList.remove("typing")},50)});
-  const MOB=innerWidth<600;
-  for(let i=0;i<(MOB?8:18);i++){const m=document.createElement("div");m.className="mote";m.style.left=Math.random()*100+"vw";
+  for(let i=0;i<(MOB?0:18);i++){const m=document.createElement("div");m.className="mote";m.style.left=Math.random()*100+"vw";
     m.style.animationDuration=10+Math.random()*14+"s";m.style.animationDelay=-Math.random()*20+"s";const z=2+Math.random()*3;m.style.width=m.style.height=z+"px";document.body.appendChild(m)}
   const P=["✿","❀","✾","❁"];
-  for(let i=0;i<(MOB?5:10);i++){const p=document.createElement("div");p.className="petal";p.textContent=P[i%4];
+  for(let i=0;i<(MOB?0:10);i++){const p=document.createElement("div");p.className="petal";p.textContent=P[i%4];
     if(i%5===0){p.style.color="#c4303f";p.style.textShadow="0 0 6px rgba(196,48,63,.8)"}
     p.style.left=Math.random()*100+"vw";p.style.animationDuration=16+Math.random()*16+"s";p.style.animationDelay=-Math.random()*30+"s";p.style.fontSize=10+Math.random()*8+"px";document.body.appendChild(p)}
 })();

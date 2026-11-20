@@ -129,6 +129,12 @@ button{font-family:inherit;cursor:pointer;border-radius:14px;font-size:16px;padd
 .ghost{flex:1 1 140px;background:transparent;color:var(--lav);border-color:rgba(169,155,214,.35)}
 .ghost:hover{color:var(--gold2);border-color:var(--gold)}
 .note{font-size:12px;color:var(--dim);margin-top:12px}
+.req{font-style:normal;font-size:11px;color:var(--gold);letter-spacing:0;margin-left:4px}
+.err{display:none;margin:12px 0 0;padding:10px 12px;border-radius:10px;border:1px solid rgba(224,86,107,.55);background:rgba(224,86,107,.1);color:#ffb3bf;font-size:14px;line-height:1.5}
+.err.on{display:block;animation:shake .35s}
+.err b{color:#ffd9df}
+input.bad{border-color:#e0566b!important;box-shadow:0 0 0 3px rgba(224,86,107,.18)!important}
+@keyframes shake{25%{transform:translateX(-6px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
 
 /* ---------- 로딩 ---------- */
 #loading{display:none;text-align:center;margin:40px 0;color:var(--lav)}
@@ -278,18 +284,19 @@ button{font-family:inherit;cursor:pointer;border-radius:14px;font-size:16px;padd
         <div class="seg" role="radiogroup" aria-label="성별"><label><input type="radio" name="gender" value="" checked><span>안 밝힘</span></label><label><input type="radio" name="gender" value="f"><span>여</span></label><label><input type="radio" name="gender" value="m"><span>남</span></label></div></div>
     </div>
     <div class="row" style="margin-top:12px">
-      <div class="field"><label for="date">생년월일</label><input id="date" type="text" inputmode="numeric" autocomplete="bday" placeholder="예) 19950731" maxlength="14">
+      <div class="field"><label for="date">생년월일 <em class="req">필수</em></label><input id="date" type="text" inputmode="numeric" autocomplete="bday" placeholder="예) 19950731" maxlength="14">
 <div class="calrow">
       <div class="seg cal" role="radiogroup" aria-label="양력 음력"><label><input type="radio" name="cal" value="solar" checked><span>양력</span></label><label><input type="radio" name="cal" value="lunar"><span>음력</span></label></div>
       <label class="check" id="leapwrap"><input type="checkbox" id="leap"><span>윤달</span></label>
     </div>
       </div>
-      <div class="field"><label for="time">태어난 시간</label><input id="time" type="text" placeholder="예) 2230, 밤 10시 30분" maxlength="16"></div>
+      <div class="field"><label for="time">태어난 시간 <em class="req" id="timereq">필수 · 모르면 아래 체크</em></label><input id="time" type="text" placeholder="예) 2230, 밤 10시 30분" maxlength="16"></div>
     </div>
     <label class="check"><input type="checkbox" id="notime"><span>시간 모름 (모르는 것도 팔자다)</span></label>
     <div class="btns">
-      <button class="primary" id="go">🌙 사주 할퀴기</button>
+      <button class="primary" id="go" type="button">🌙 사주 할퀴기</button>
     </div>
+    <p class="err" id="err" role="alert"></p>
     <p class="note">한국시간 기준으로 대충 뽑음. 세세한 시간 보정 같은 건 냥선생이 귀찮아서 안 함.</p>
   </section>
 
@@ -1214,7 +1221,13 @@ function parseDate(v,raw){
   if(y<1900||y>2099||t.getFullYear()!==y||t.getMonth()!==m-1||t.getDate()!==d) return null;
   return [y,m,d];
 }
+const KNUM=[["열두",12],["열한",11],["열",10],["아홉",9],["여덟",8],["일곱",7],["여섯",6],["다섯",5],["네",4],["세",3],["두",2],["한",1]];
+const SIJI={"자":0,"축":2,"인":4,"묘":6,"진":8,"사":10,"오":12,"미":14,"신":16,"유":18,"술":20,"해":22};
 function parseTime(v){
+  const sj=v.replace(/\s/g,"").match(/^([자축인묘진사오미신유술해])시$/); if(sj) return [SIJI[sj[1]],0];
+  for(const [k,n] of KNUM) v=v.replace(new RegExp(k+"\\s*시"),n+"시");
+  if(/정오/.test(v)&&!/\d/.test(v)) return [12,0];
+  if(/자정/.test(v)&&!/\d/.test(v)) return [0,0];
   const pm=/오후|밤|저녁|pm/i.test(v), am=/오전|새벽|아침|am/i.test(v);
   const nums=v.match(/\d+/g); if(!nums) return null;
   let h,mi=0;
@@ -1224,21 +1237,31 @@ function parseTime(v){
   if(h>23||mi>59) return null;
   return [h,mi];
 }
+function fail(msg,id){
+  bubble(msg);const e=$("err");e.innerHTML="🐈‍⬛ "+msg;e.classList.remove("on");void e.offsetWidth;e.classList.add("on");
+  document.querySelectorAll("input.bad").forEach(x=>x.classList.remove("bad"));
+  if(id){const f=$(id);f.classList.add("bad");f.focus({preventScroll:true});}
+  e.scrollIntoView({behavior:"smooth",block:"center"});
+}
 function run(){
+  $("err").classList.remove("on");document.querySelectorAll("input.bad").forEach(x=>x.classList.remove("bad"));
   const v=$("date").value.trim();
-  if(!v){bubble("생년월일도 안 넣고 뭘 보겠다는 거냐. <b>기본부터</b> 해라.");return}
+  if(!v){fail("생년월일도 안 넣고 뭘 보겠다는 거냐. <b>기본부터</b> 해라.","date");return}
   const lunar=document.querySelector('input[name="cal"]:checked').value==="lunar";
   let D=parseDate(v,lunar);
-  if(!D){bubble("날짜가 이상하다. <b>19950731</b>처럼 여덟 자리로 넣어라. 그것도 어렵냐.");return}
+  if(!D){fail("날짜가 이상하다. <b>19950731</b>처럼 여덟 자리로 넣어라. 그것도 어렵냐.","date");return}
   if(lunar){
     const L=lunarToSolar(D[0],D[1],D[2],$("leap").checked);
-    if(!L){bubble(D[0]<1900||D[0]>2049?"음력은 <b>1900~2049년</b>까지만 본다. 그 밖은 냥선생도 모른다.":$("leap").checked?"그해 그 달엔 <b>윤달이 없다</b>. 윤달 체크 풀어라.":"그 음력 날짜는 <b>없는 날</b>이다. 30일 없는 달도 있다.");return}
+    if(!L){fail(D[0]<1900||D[0]>2049?"음력은 <b>1900~2049년</b>까지만 본다. 그 밖은 냥선생도 모른다.":$("leap").checked?"그해 그 달엔 <b>윤달이 없다</b>. 윤달 체크 풀어라.":"그 음력 날짜는 <b>없는 날</b>이다. 30일 없는 달도 있다.","date");return}
     D=L;
   }
   const [y,m,d]=D;
   const tv=$("time").value.trim();
   let T=null;
-  if(!$("notime").checked && tv){T=parseTime(tv); if(!T){bubble("시간을 못 알아먹겠다. <b>2230</b>이나 <b>밤 10시 30분</b>처럼 써라.");return}}
+  if(!$("notime").checked){
+    if(!tv){fail("태어난 시간도 넣어라. 모르면 <b>'시간 모름'</b>에 체크하고.","time");return}
+    T=parseTime(tv); if(!T){fail("시간을 못 알아먹겠다. <b>2230</b>이나 <b>밤 10시 30분</b>처럼 써라.","time");return}
+  }
   const noT=!T;
   const [hh,mm]=noT?[0,0]:T;
   const s=calcSaju(y,m,d,hh,mm,!noT);
@@ -1257,7 +1280,9 @@ function gender(){const r=document.querySelector('input[name="gender"]:checked')
 function bubble(h){$("bubble").innerHTML=h}
 $("go").onclick=run;
 document.querySelectorAll('input[name="cal"]').forEach(r=>r.onchange=()=>{const on=r.value==="lunar"&&r.checked;$("leapwrap").classList.toggle("on",on);if(!on)$("leap").checked=false});
-$("notime").onchange=e=>{$("time").disabled=e.target.checked};
+$("notime").onchange=e=>{const c=e.target.checked;$("time").disabled=c;$("time").classList.remove("bad");$("timereq").textContent=c?"모름으로 넘어감":"필수 · 모르면 아래 체크";if(c)$("err").classList.remove("on")};
+["date","time"].forEach(id=>$(id).addEventListener("input",()=>$(id).classList.remove("bad")));
+["date","time"].forEach(id=>$(id).addEventListener("keydown",e=>{if(e.key==="Enter")run()}));
 $("again").onclick=()=>{$("result").style.display="none";window.scrollTo({top:0,behavior:"smooth"});bubble("또 누굴 털려고? 좋다, <b>내놔봐</b>.")};
 $("copy").onclick=()=>{navigator.clipboard?.writeText(lastText).then(()=>{$("toast").classList.add("on");clearTimeout(window._tt);window._tt=setTimeout(()=>$("toast").classList.remove("on"),4000)})};
 

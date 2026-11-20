@@ -107,6 +107,12 @@ input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,
 .seg span{flex:1;display:flex;align-items:center;justify-content:center;border-radius:12px;border:1px solid rgba(169,155,214,.3);background:rgba(5,6,15,.6);color:var(--dim);font-size:15px;transition:.2s}
 .seg input:checked+span{border-color:var(--gold);color:var(--gold2);background:linear-gradient(180deg,#3a2668,#1a1238);box-shadow:0 0 10px rgba(232,197,107,.2)}
 .seg input:focus-visible+span{outline:2px solid rgba(232,197,107,.4);outline-offset:2px}
+.calrow{display:flex;align-items:center;gap:14px;margin-top:2px}
+.row{align-items:flex-start}
+.seg.cal{height:38px;width:170px;flex:none}
+.seg.cal span{font-size:14px}
+#leapwrap{margin-top:0;visibility:hidden}
+#leapwrap.on{visibility:visible}
 .check{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:14px;color:var(--dim)}
 .check{cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
 .check input{-webkit-appearance:none;appearance:none;flex:none;width:20px;height:20px;padding:0;margin:0;border-radius:6px;
@@ -272,14 +278,19 @@ button{font-family:inherit;cursor:pointer;border-radius:14px;font-size:16px;padd
         <div class="seg" role="radiogroup" aria-label="성별"><label><input type="radio" name="gender" value="" checked><span>안 밝힘</span></label><label><input type="radio" name="gender" value="f"><span>여</span></label><label><input type="radio" name="gender" value="m"><span>남</span></label></div></div>
     </div>
     <div class="row" style="margin-top:12px">
-      <div class="field"><label for="date">생년월일 (양력)</label><input id="date" type="text" inputmode="numeric" autocomplete="bday" placeholder="예) 19950731" maxlength="14"></div>
+      <div class="field"><label for="date">생년월일</label><input id="date" type="text" inputmode="numeric" autocomplete="bday" placeholder="예) 19950731" maxlength="14">
+<div class="calrow">
+      <div class="seg cal" role="radiogroup" aria-label="양력 음력"><label><input type="radio" name="cal" value="solar" checked><span>양력</span></label><label><input type="radio" name="cal" value="lunar"><span>음력</span></label></div>
+      <label class="check" id="leapwrap"><input type="checkbox" id="leap"><span>윤달</span></label>
+    </div>
+      </div>
       <div class="field"><label for="time">태어난 시간</label><input id="time" type="text" placeholder="예) 2230, 밤 10시 30분" maxlength="16"></div>
     </div>
     <label class="check"><input type="checkbox" id="notime"><span>시간 모름 (모르는 것도 팔자다)</span></label>
     <div class="btns">
       <button class="primary" id="go">🌙 사주 할퀴기</button>
     </div>
-    <p class="note">양력·한국시간 기준으로 대충 뽑음. 세세한 시간 보정 같은 건 냥선생이 귀찮아서 안 함.</p>
+    <p class="note">한국시간 기준으로 대충 뽑음. 세세한 시간 보정 같은 건 냥선생이 귀찮아서 안 함.</p>
   </section>
 
   <div id="loading"><div class="orb"></div><div id="loadmsg">냥선생이 꼬리로 점치는 중…</div></div>
@@ -1166,12 +1177,25 @@ function render(s,name,g){
 }
 const esc=s=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const LOADS=["냥선생이 꼬리로 점치는 중…","달빛에 네 팔자 비춰보는 중… 어둡다.","연기 속에서 단점 세는 중… 아직 세는 중."];
-function parseDate(v){
+/* 한국 음력 1900~2049 (한국천문연구원 기준 데이터에서 뽑음): 설날까지 일수<<17 | 윤달<<13 | 큰달 비트 */
+const LUNAR=[4003538,6424402,4984485,3716682,6030923,4459163,3183958,5637482,4197209,2774866,5244754,3857189,6294309,4721227,3322523,5769901,4457834,2902889,5376937,4127570,6557074,4984101,3586637,6031702,4588213,3052973,5637844,4197801,2907538,5246610,3853606,6161703,4721239,3322550,5769946,4458196,3042985,5375817,3995283,6425235,4982059,3459675,5900653,4590442,3316564,5639076,4197193,2775699,5245589,3732779,6161709,4721325,3454314,5770674,4459940,3046729,5508426,4004501,6425238,4982102,3590837,5901013,4589266,3182245,5639845,4197962,2780310,5114523,3863894,6161770,4721497,3454802,5900114,4327205,2922059,5376587,4002475,6292141,4851051,3591017,6032809,4590994,3185445,5639461,4282957,6556246,5112502,3724717,6293204,4722089,3456402,5901970,4459814,2910806,5245527,4002486,6425434,4982484,3583689,6031177,4589203,3052839,5506347,4065883,2774362,5112682,3734357,6294436,4852553,3324563,5769877,4326701,2910813,5245613,4011434,6424018,4984229,3587402,6032714,4590229,3183917,5506390,4065973,2774442,5244626,3722917,6164133,4853322,3452054,5639323,4326746,2910933,5376873,4028242,6424402,4983589,3593803,5900875,4457643,3056987,5506413,4066153,2775890,5246354,3865893,6163749,4721229,3323053,5767862,4195765];
+function lunarToSolar(y,m,d,leap){
+  if(y<1900||y>2049) return null;
+  const v=LUNAR[y-1900], ny=v>>>17, lm=(v>>13)&15, mask=v&8191;
+  if(leap&&lm!==m) return null;
+  const idx=m-1+(lm&&(m>lm||(leap&&m===lm))?1:0);
+  if(d<1||d>29+((mask>>idx)&1)) return null;
+  let days=ny+d-1; for(let i=0;i<idx;i++) days+=29+((mask>>i)&1);
+  const t=new Date(Date.UTC(y,0,1)+days*864e5);
+  return [t.getUTCFullYear(),t.getUTCMonth()+1,t.getUTCDate()];
+}
+function parseDate(v,raw){
   let y,m,d; const dg=v.replace(/\D/g,""); const parts=v.split(/\D+/).filter(Boolean);
   if(parts.length>=3){[y,m,d]=parts.map(Number); if(y<100) y+= y>(new Date().getFullYear()%100)?1900:2000;}
   else if(dg.length===8){y=+dg.slice(0,4);m=+dg.slice(4,6);d=+dg.slice(6,8);}
   else if(dg.length===6){y=+dg.slice(0,2);m=+dg.slice(2,4);d=+dg.slice(4,6);y+= y>(new Date().getFullYear()%100)?1900:2000;}
   else return null;
+  if(raw) return (m>=1&&m<=12&&d>=1&&d<=30)?[y,m,d]:null;
   const t=new Date(y,m-1,d);
   if(y<1900||y>2099||t.getFullYear()!==y||t.getMonth()!==m-1||t.getDate()!==d) return null;
   return [y,m,d];
@@ -1189,8 +1213,14 @@ function parseTime(v){
 function run(){
   const v=$("date").value.trim();
   if(!v){bubble("생년월일도 안 넣고 뭘 보겠다는 거냐. <b>기본부터</b> 해라.");return}
-  const D=parseDate(v);
+  const lunar=document.querySelector('input[name="cal"]:checked').value==="lunar";
+  let D=parseDate(v,lunar);
   if(!D){bubble("날짜가 이상하다. <b>19950731</b>처럼 여덟 자리로 넣어라. 그것도 어렵냐.");return}
+  if(lunar){
+    const L=lunarToSolar(D[0],D[1],D[2],$("leap").checked);
+    if(!L){bubble(D[0]<1900||D[0]>2049?"음력은 <b>1900~2049년</b>까지만 본다. 그 밖은 냥선생도 모른다.":$("leap").checked?"그해 그 달엔 <b>윤달이 없다</b>. 윤달 체크 풀어라.":"그 음력 날짜는 <b>없는 날</b>이다. 30일 없는 달도 있다.");return}
+    D=L;
+  }
   const [y,m,d]=D;
   const tv=$("time").value.trim();
   let T=null;
@@ -1212,6 +1242,7 @@ function run(){
 function gender(){const r=document.querySelector('input[name="gender"]:checked');return r?r.value:""}
 function bubble(h){$("bubble").innerHTML=h}
 $("go").onclick=run;
+document.querySelectorAll('input[name="cal"]').forEach(r=>r.onchange=()=>{const on=r.value==="lunar"&&r.checked;$("leapwrap").classList.toggle("on",on);if(!on)$("leap").checked=false});
 $("notime").onchange=e=>{$("time").disabled=e.target.checked};
 $("again").onclick=()=>{$("result").style.display="none";window.scrollTo({top:0,behavior:"smooth"});bubble("또 누굴 털려고? 좋다, <b>내놔봐</b>.")};
 $("copy").onclick=()=>{navigator.clipboard?.writeText(lastText).then(()=>{$("toast").classList.add("on");clearTimeout(window._tt);window._tt=setTimeout(()=>$("toast").classList.remove("on"),4000)})};
